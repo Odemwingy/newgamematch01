@@ -76,15 +76,15 @@
     {
       "id": 6,
       "name": "发布准备",
-      "status": "in_progress",
+      "status": "completed",
       "tasks": [
-        { "id": "app-icon", "name": "应用图标", "status": "pending" },
-        { "id": "splash-screen", "name": "启动画面", "status": "pending" },
-        { "id": "app-store-info", "name": "应用商店信息", "status": "pending" },
-        { "id": "testing", "name": "测试", "status": "pending" }
+        { "id": "app-icon", "name": "应用图标", "status": "done" },
+        { "id": "splash-screen", "name": "启动画面", "status": "done" },
+        { "id": "app-store-info", "name": "应用商店信息", "status": "done" },
+        { "id": "testing", "name": "测试", "status": "done" }
       ]
     }
   ],
-  "nextTask": "Milestone 6: 发布准备",
+  "nextTask": "项目开发完成！可以开始发布。",
   "blockedBy": []
 }
