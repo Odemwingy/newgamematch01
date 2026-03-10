@@ -2,7 +2,7 @@
   "project": "qianli",
   "name": "签历",
   "started": "2026-03-09T17:57:00+08:00",
-  "currentMilestone": 1,
+  "currentMilestone": 3,
   "milestones": [
     {
       "id": 0,
@@ -23,11 +23,11 @@
     {
       "id": 1,
       "name": "首页黄历",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
         { "id": "almanac-service", "name": "封装黄历服务", "status": "done" },
-        { "id": "almanac-table", "name": "创建 almanac_cache 表", "status": "pending" },
-        { "id": "almanac-api", "name": "完成 /v1/almanac 接口", "status": "pending" },
+        { "id": "almanac-table", "name": "创建 almanac_cache 表", "status": "done" },
+        { "id": "almanac-api", "name": "完成 /v1/almanac 接口", "status": "done" },
         { "id": "home-skeleton", "name": "首页骨架屏", "status": "done" },
         { "id": "home-display", "name": "展示完整黄历信息", "status": "done" },
         { "id": "draw-entry", "name": "加入抽签入口", "status": "done" }
@@ -36,13 +36,13 @@
     {
       "id": 2,
       "name": "抽签与结果页",
-      "status": "pending",
+      "status": "completed",
       "tasks": [
-        { "id": "sign-tables", "name": "创建签卡相关表", "status": "pending" },
-        { "id": "import-signs", "name": "导入 36 张签卡", "status": "pending" },
-        { "id": "draw-api", "name": "完成抽签接口", "status": "pending" },
-        { "id": "draw-ui", "name": "抽签页 UI", "status": "pending" },
-        { "id": "result-ui", "name": "结果页 UI", "status": "pending" }
+        { "id": "sign-tables", "name": "创建签卡相关表", "status": "done" },
+        { "id": "import-signs", "name": "导入 36 张签卡", "status": "done" },
+        { "id": "draw-api", "name": "完成抽签接口", "status": "done" },
+        { "id": "draw-ui", "name": "抽签页 UI", "status": "done" },
+        { "id": "result-ui", "name": "结果页 UI", "status": "done" }
       ]
     },
     {
@@ -66,6 +66,6 @@
       "status": "pending"
     }
   ],
-  "nextTask": "Milestone 1: 安装 lunar-typescript 库",
-  "blockedBy": ["需要 Supabase 项目配置（URL + Key）"]
+  "nextTask": "Milestone 3: AI 深度解读功能",
+  "blockedBy": []
 }
