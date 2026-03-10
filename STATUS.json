@@ -2,7 +2,7 @@
   "project": "qianli",
   "name": "签历",
   "started": "2026-03-09T17:57:00+08:00",
-  "currentMilestone": 3,
+  "currentMilestone": 6,
   "milestones": [
     {
       "id": 0,
@@ -48,24 +48,43 @@
     {
       "id": 3,
       "name": "AI 深度解读",
-      "status": "pending"
+      "status": "completed",
+      "tasks": [
+        { "id": "ai-service", "name": "AI 服务封装", "status": "done" },
+        { "id": "ai-ui", "name": "AI 解读 UI", "status": "done" }
+      ]
     },
     {
       "id": 4,
       "name": "历史记录与备注",
-      "status": "pending"
+      "status": "completed",
+      "tasks": [
+        { "id": "history-page", "name": "历史记录页面", "status": "done" },
+        { "id": "profile-page", "name": "个人中心页面", "status": "done" }
+      ]
     },
     {
       "id": 5,
       "name": "订阅与付费墙",
-      "status": "pending"
+      "status": "completed",
+      "tasks": [
+        { "id": "subscription-service", "name": "订阅服务", "status": "done" },
+        { "id": "paywall-component", "name": "付费墙组件", "status": "done" },
+        { "id": "draw-limit", "name": "抽签次数限制", "status": "done" }
+      ]
     },
     {
       "id": 6,
       "name": "发布准备",
-      "status": "pending"
+      "status": "in_progress",
+      "tasks": [
+        { "id": "app-icon", "name": "应用图标", "status": "pending" },
+        { "id": "splash-screen", "name": "启动画面", "status": "pending" },
+        { "id": "app-store-info", "name": "应用商店信息", "status": "pending" },
+        { "id": "testing", "name": "测试", "status": "pending" }
+      ]
     }
   ],
-  "nextTask": "Milestone 3: AI 深度解读功能",
+  "nextTask": "Milestone 6: 发布准备",
   "blockedBy": []
 }

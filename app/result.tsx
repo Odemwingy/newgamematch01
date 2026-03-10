@@ -1,13 +1,18 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, useColorScheme } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SignCard } from '../src/data/signs';
+import { getAIInterpretation, AIInterpretation } from '../src/services/aiService';
 import { theme } from '../src/theme';
 
 export default function ResultScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams<{ sign: string }>();
+  const params = useLocalSearchParams<{ sign: string; question?: string }>();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+  
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiInterpretation, setAiInterpretation] = useState<AIInterpretation | null>(null);
 
   let sign: SignCard | null = null;
   try {
@@ -15,6 +20,33 @@ export default function ResultScreen() {
   } catch (e) {
     // ignore
   }
+
+  useEffect(() => {
+    if (sign) {
+      loadAIInterpretation();
+    }
+  }, [sign]);
+
+  const loadAIInterpretation = async () => {
+    if (!sign) return;
+    
+    setAiLoading(true);
+    try {
+      const result = await getAIInterpretation({
+        signNumber: sign.number,
+        signTitle: sign.title,
+        signType: sign.type,
+        poem: sign.poem,
+        interpretation: sign.interpretation,
+        question: params.question,
+      });
+      setAiInterpretation(result);
+    } catch (error) {
+      console.error('Failed to load AI interpretation:', error);
+    } finally {
+      setAiLoading(false);
+    }
+  };
 
   if (!sign) {
     return (
@@ -70,20 +102,94 @@ export default function ResultScreen() {
         </Text>
       </View>
 
-      {/* 解签 */}
+      {/* 传统解签 */}
       <View style={[styles.card, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
         <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : theme.colors.text }]}>
-          💡 解签
+          💡 传统解签
         </Text>
         <Text style={[styles.interpretationText, { color: isDark ? '#ccc' : theme.colors.textSecondary }]}>
           {sign.interpretation}
         </Text>
       </View>
 
+      {/* AI 深度解读 */}
+      <View style={[styles.card, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+        <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : theme.colors.text }]}>
+          🤖 AI 深度解读
+        </Text>
+        
+        {aiLoading ? (
+          <View style={styles.aiLoading}>
+            <ActivityIndicator size="small" color={theme.colors.primary} />
+            <Text style={[styles.aiLoadingText, { color: isDark ? '#888' : theme.colors.textMuted }]}>
+              正在为您解读...
+            </Text>
+          </View>
+        ) : aiInterpretation ? (
+          <View>
+            <Text style={[styles.aiSummary, { color: isDark ? '#ddd' : theme.colors.text }]}>
+              {aiInterpretation.summary}
+            </Text>
+            
+            <View style={styles.aiSection}>
+              <Text style={[styles.aiLabel, { color: isDark ? '#888' : theme.colors.textMuted }]}>
+                人生指引
+              </Text>
+              <Text style={[styles.aiContent, { color: isDark ? '#ccc' : theme.colors.textSecondary }]}>
+                {aiInterpretation.guidance}
+              </Text>
+            </View>
+            
+            <View style={styles.aiSection}>
+              <Text style={[styles.aiLabel, { color: isDark ? '#888' : theme.colors.textMuted }]}>
+                建议行动
+              </Text>
+              <Text style={[styles.aiContent, { color: isDark ? '#ccc' : theme.colors.textSecondary }]}>
+                {aiInterpretation.advice}
+              </Text>
+            </View>
+            
+            {/* 吉利信息 */}
+            <View style={styles.luckyInfo}>
+              {aiInterpretation.luckyDirection && (
+                <View style={[styles.luckyBadge, { backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5' }]}>
+                  <Text style={styles.luckyEmoji}>🧭</Text>
+                  <Text style={[styles.luckyText, { color: isDark ? '#aaa' : '#666' }]}>
+                    {aiInterpretation.luckyDirection}
+                  </Text>
+                </View>
+              )}
+              {aiInterpretation.luckyColor && (
+                <View style={[styles.luckyBadge, { backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5' }]}>
+                  <Text style={styles.luckyEmoji}>🎨</Text>
+                  <Text style={[styles.luckyText, { color: isDark ? '#aaa' : '#666' }]}>
+                    {aiInterpretation.luckyColor}
+                  </Text>
+                </View>
+              )}
+              {aiInterpretation.luckyNumber && (
+                <View style={[styles.luckyBadge, { backgroundColor: isDark ? '#2a2a2a' : '#f5f5f5' }]}>
+                  <Text style={styles.luckyEmoji}>🔢</Text>
+                  <Text style={[styles.luckyText, { color: isDark ? '#aaa' : '#666' }]}>
+                    {aiInterpretation.luckyNumber}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity onPress={loadAIInterpretation}>
+            <Text style={[styles.aiRetryText, { color: theme.colors.primary }]}>
+              点击重新获取解读
+            </Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
       {/* 详细解读 */}
       <View style={[styles.card, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
         <Text style={[styles.sectionTitle, { color: isDark ? '#fff' : theme.colors.text }]}>
-          🔮 详细解读
+          🔮 传统详解
         </Text>
         
         {sign.career && (
@@ -222,6 +328,59 @@ const styles = StyleSheet.create({
   interpretationText: {
     fontSize: 16,
     lineHeight: 28,
+  },
+  aiLoading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+  },
+  aiLoadingText: {
+    marginLeft: 12,
+    fontSize: 15,
+  },
+  aiSummary: {
+    fontSize: 16,
+    fontWeight: '600',
+    lineHeight: 26,
+    marginBottom: 12,
+  },
+  aiSection: {
+    marginBottom: 12,
+  },
+  aiLabel: {
+    fontSize: 13,
+    marginBottom: 4,
+  },
+  aiContent: {
+    fontSize: 15,
+    lineHeight: 24,
+  },
+  luckyInfo: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginTop: 16,
+  },
+  luckyBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  luckyEmoji: {
+    fontSize: 14,
+    marginRight: 4,
+  },
+  luckyText: {
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  aiRetryText: {
+    fontSize: 15,
+    textAlign: 'center',
+    paddingVertical: 8,
   },
   detailRow: {
     marginBottom: 12,

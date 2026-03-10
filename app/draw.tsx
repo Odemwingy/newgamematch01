@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, useColorScheme, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { drawSign, saveDrawResult } from '../src/services/drawService';
+import { getRemainingDrawsToday, recordDraw, hasFeatureAccess } from '../src/services/subscriptionService';
 import { theme } from '../src/theme';
 
 export default function DrawScreen() {
@@ -10,12 +11,47 @@ export default function DrawScreen() {
   const isDark = colorScheme === 'dark';
   
   const [isDrawing, setIsDrawing] = useState(false);
+  const [remainingDraws, setRemainingDraws] = useState<number>(3);
   const [rotation] = useState(new Animated.Value(0));
+
+  useEffect(() => {
+    loadRemainingDraws();
+  }, []);
+
+  const loadRemainingDraws = async () => {
+    const remaining = await getRemainingDrawsToday();
+    setRemainingDraws(remaining);
+  };
 
   const handleDraw = async () => {
     if (isDrawing) return;
     
+    // 检查抽签次数
+    if (remainingDraws <= 0) {
+      const hasPremium = await hasFeatureAccess('unlimited_draw');
+      if (!hasPremium) {
+        Alert.alert(
+          '今日抽签次数已用完',
+          '升级高级会员可无限抽签',
+          [
+            { text: '取消', style: 'cancel' },
+            { 
+              text: '了解会员', 
+              onPress: () => {
+                // TODO: 打开付费墙
+                Alert.alert('会员功能即将上线');
+              }
+            },
+          ]
+        );
+        return;
+      }
+    }
+    
     setIsDrawing(true);
+    
+    // 记录抽签
+    await recordDraw();
     
     // 摇签动画
     Animated.sequence([
@@ -52,6 +88,7 @@ export default function DrawScreen() {
       });
       
       setIsDrawing(false);
+      setRemainingDraws(prev => Math.max(0, prev - 1));
     }, 1500);
   };
 
@@ -75,6 +112,13 @@ export default function DrawScreen() {
         <Text style={[styles.hint, { color: isDark ? '#888' : theme.colors.textMuted }]}>
           {isDrawing ? '正在摇签...' : '诚心祈愿，摇动签筒'}
         </Text>
+        
+        {/* 显示剩余次数 */}
+        {!isDrawing && (
+          <Text style={[styles.remainingText, { color: isDark ? '#666' : '#999' }]}>
+            今日剩余 {remainingDraws} 次
+          </Text>
+        )}
 
         <TouchableOpacity
           style={[
@@ -138,8 +182,12 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 16,
-    marginBottom: 32,
+    marginBottom: 8,
     textAlign: 'center',
+  },
+  remainingText: {
+    fontSize: 14,
+    marginBottom: 24,
   },
   drawButton: {
     width: '80%',
