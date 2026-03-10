@@ -1,0 +1,71 @@
+{
+  "project": "qianli",
+  "name": "签历",
+  "started": "2026-03-09T17:57:00+08:00",
+  "currentMilestone": 1,
+  "milestones": [
+    {
+      "id": 0,
+      "name": "仓库初始化",
+      "status": "completed",
+      "tasks": [
+        { "id": "create-expo", "name": "创建 Expo 项目", "status": "done" },
+        { "id": "config-web", "name": "配置 Web 支持", "status": "done" },
+        { "id": "install-deps", "name": "安装核心依赖", "status": "done" },
+        { "id": "create-structure", "name": "创建项目结构", "status": "done" },
+        { "id": "git-init", "name": "初始化 Git 仓库", "status": "done" },
+        { "id": "config-router", "name": "配置 Expo Router", "status": "done" },
+        { "id": "create-home", "name": "创建首页", "status": "done" },
+        { "id": "create-theme", "name": "创建主题配置", "status": "done" },
+        { "id": "push-github", "name": "推送到 GitHub", "status": "done" }
+      ]
+    },
+    {
+      "id": 1,
+      "name": "首页黄历",
+      "status": "pending",
+      "tasks": [
+        { "id": "almanac-service", "name": "封装黄历服务", "status": "done" },
+        { "id": "almanac-table", "name": "创建 almanac_cache 表", "status": "pending" },
+        { "id": "almanac-api", "name": "完成 /v1/almanac 接口", "status": "pending" },
+        { "id": "home-skeleton", "name": "首页骨架屏", "status": "done" },
+        { "id": "home-display", "name": "展示完整黄历信息", "status": "done" },
+        { "id": "draw-entry", "name": "加入抽签入口", "status": "done" }
+      ]
+    },
+    {
+      "id": 2,
+      "name": "抽签与结果页",
+      "status": "pending",
+      "tasks": [
+        { "id": "sign-tables", "name": "创建签卡相关表", "status": "pending" },
+        { "id": "import-signs", "name": "导入 36 张签卡", "status": "pending" },
+        { "id": "draw-api", "name": "完成抽签接口", "status": "pending" },
+        { "id": "draw-ui", "name": "抽签页 UI", "status": "pending" },
+        { "id": "result-ui", "name": "结果页 UI", "status": "pending" }
+      ]
+    },
+    {
+      "id": 3,
+      "name": "AI 深度解读",
+      "status": "pending"
+    },
+    {
+      "id": 4,
+      "name": "历史记录与备注",
+      "status": "pending"
+    },
+    {
+      "id": 5,
+      "name": "订阅与付费墙",
+      "status": "pending"
+    },
+    {
+      "id": 6,
+      "name": "发布准备",
+      "status": "pending"
+    }
+  ],
+  "nextTask": "Milestone 1: 安装 lunar-typescript 库",
+  "blockedBy": ["需要 Supabase 项目配置（URL + Key）"]
+}

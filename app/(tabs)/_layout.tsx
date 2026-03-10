@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, History, User } from '../src/components/icons';
+import { Home, History, User } from '../../src/components/icons';
 
 export default function TabsLayout() {
   return (

@@ -1,74 +1,156 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAlmanac } from '../../src/hooks/useAlmanac';
+import { AlmanacSkeleton } from '../../src/components/Skeleton';
 import { theme } from '../../src/theme';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
   const { almanac, loading, error } = useAlmanac();
 
   if (loading) {
     return (
-      <View style={styles.container}>
-        <Text style={styles.loadingText}>加载中...</Text>
+      <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : theme.colors.background }]}>
+        <AlmanacSkeleton />
+      </ScrollView>
+    );
+  }
+
+  if (error || !almanac) {
+    return (
+      <View style={[styles.centerContainer, { backgroundColor: isDark ? '#0a0a0a' : theme.colors.background }]}>
+        <Text style={styles.errorText}>加载失败，请下拉重试</Text>
       </View>
     );
   }
 
-  if (error) {
-    return (
-      <View style={styles.container}>
-        <Text style={styles.errorText}>加载失败，请重试</Text>
-      </View>
-    );
-  }
+  const formatSolarDate = () => {
+    return `${almanac.solarYear}年${almanac.solarMonth}月${almanac.solarDay}日 ${almanac.weekDay}`;
+  };
+
+  const formatLunarDate = () => {
+    return `农历${almanac.lunarMonthName}${almanac.lunarDayName}`;
+  };
 
   return (
-    <ScrollView style={styles.container}>
-      {/* 日期区 */}
-      <View style={styles.dateSection}>
-        <Text style={styles.solarDate}>{almanac?.solarLabel || '2026年3月9日'}</Text>
-        <Text style={styles.lunarDate}>{almanac?.lunarLabel || '农历二月初十'}</Text>
-        {almanac?.buddhistLabel && (
-          <Text style={styles.extraDate}>佛历 {almanac.buddhistLabel}</Text>
-        )}
-        {almanac?.taoistLabel && (
-          <Text style={styles.extraDate}>道历 {almanac.taoistLabel}</Text>
-        )}
-      </View>
-
-      {/* 今日卡片区 */}
-      <View style={styles.card}>
-        {almanac?.jieqi && (
-          <View style={styles.tagRow}>
-            <Text style={styles.tag}>{almanac.jieqi}</Text>
-          </View>
-        )}
-        
-        <View style={styles.yiJiSection}>
-          <View style={styles.yiColumn}>
-            <Text style={styles.yiTitle}>宜</Text>
-            <Text style={styles.yiText}>{almanac?.yi || '祈福 出行 签约'}</Text>
-          </View>
-          <View style={styles.divider} />
-          <View style={styles.jiColumn}>
-            <Text style={styles.jiTitle}>忌</Text>
-            <Text style={styles.jiText}>{almanac?.ji || '动土 安葬'}</Text>
+    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#0a0a0a' : theme.colors.background }]}>
+      {/* 日期卡片区 */}
+      <View style={[styles.dateCard, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+        <View style={styles.dateHeader}>
+          <Text style={[styles.solarDate, { color: isDark ? '#fff' : theme.colors.text }]}>
+            {formatSolarDate()}
+          </Text>
+          <View style={[styles.zodiacBadge, { backgroundColor: isDark ? '#2a2a2a' : theme.colors.primaryLight }]}>
+            <Text style={styles.zodiacText}>🐲 {almanac.zodiac}</Text>
           </View>
         </View>
+        
+        <View style={styles.lunarSection}>
+          <Text style={[styles.lunarDate, { color: isDark ? '#aaa' : theme.colors.textSecondary }]}>
+            {formatLunarDate()}
+          </Text>
+          <Text style={[styles.ganZhiDate, { color: isDark ? '#888' : theme.colors.textMuted }]}>
+            {almanac.yearGanZhi} {almanac.monthGanZhi} {almanac.dayGanZhi}
+          </Text>
+        </View>
+        
+        <View style={styles.extraInfo}>
+          <Text style={[styles.infoTag, { backgroundColor: isDark ? '#333' : '#f0f0f0' }]}>
+            {almanac.constellation}
+          </Text>
+          {almanac.festival ? (
+            <Text style={[styles.infoTag, { backgroundColor: isDark ? '#3a2a1a' : '#fff3e0' }]}>
+              🎉 {almanac.festival}
+            </Text>
+          ) : null}
+        </View>
+      </View>
 
-        <Text style={styles.dailyTip}>
-          {almanac?.dailyTip || '今日宜静心思考，适合做重要决定。'}
+      {/* 宜忌卡片区 */}
+      <View style={[styles.yiJiCard, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+        <View style={styles.yiSection}>
+          <View style={styles.yiHeader}>
+            <Text style={styles.yiTitle}>宜</Text>
+          </View>
+          <View style={styles.yiJiList}>
+            {almanac.yi.length > 0 ? (
+              almanac.yi.map((item, index) => (
+                <View key={index} style={[styles.yiTag, { backgroundColor: isDark ? '#1a3a1a' : '#e8f5e9' }]}>
+                  <Text style={[styles.yiTagText, { color: isDark ? '#81c784' : '#2e7d32' }]}>{item}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={[styles.emptyText, { color: isDark ? '#666' : '#999' }]}>诸事皆宜</Text>
+            )}
+          </View>
+        </View>
+        
+        <View style={[styles.divider, { backgroundColor: isDark ? '#333' : theme.colors.border }]} />
+        
+        <View style={styles.jiSection}>
+          <View style={styles.jiHeader}>
+            <Text style={styles.jiTitle}>忌</Text>
+          </View>
+          <View style={styles.yiJiList}>
+            {almanac.ji.length > 0 ? (
+              almanac.ji.map((item, index) => (
+                <View key={index} style={[styles.jiTag, { backgroundColor: isDark ? '#3a1a1a' : '#ffebee' }]}>
+                  <Text style={[styles.jiTagText, { color: isDark ? '#e57373' : '#c62828' }]}>{item}</Text>
+                </View>
+              ))
+            ) : (
+              <Text style={[styles.emptyText, { color: isDark ? '#666' : '#999' }]}>诸事皆宜</Text>
+            )}
+          </View>
+        </View>
+      </View>
+
+      {/* 其他信息卡片区 */}
+      <View style={[styles.infoCard, { backgroundColor: isDark ? '#1a1a1a' : '#fff' }]}>
+        <Text style={[styles.infoCardTitle, { color: isDark ? '#fff' : theme.colors.text }]}>
+          今日详情
         </Text>
+        
+        {almanac.chongSha ? (
+          <View style={styles.infoRow}>
+            <Text style={[styles.infoLabel, { color: isDark ? '#888' : theme.colors.textMuted }]}>冲煞</Text>
+            <Text style={[styles.infoValue, { color: isDark ? '#ccc' : theme.colors.text }]}>{almanac.chongSha}</Text>
+          </View>
+        ) : null}
+        
+        {almanac.pengZu ? (
+          <View style={styles.infoRow}>
+            <Text style={[styles.infoLabel, { color: isDark ? '#888' : theme.colors.textMuted }]}>彭祖百忌</Text>
+            <Text style={[styles.infoValue, { color: isDark ? '#ccc' : theme.colors.text }]}>{almanac.pengZu}</Text>
+          </View>
+        ) : null}
+        
+        {almanac.taiShen ? (
+          <View style={styles.infoRow}>
+            <Text style={[styles.infoLabel, { color: isDark ? '#888' : theme.colors.textMuted }]}>胎神</Text>
+            <Text style={[styles.infoValue, { color: isDark ? '#ccc' : theme.colors.text }]}>{almanac.taiShen}</Text>
+          </View>
+        ) : null}
+        
+        {almanac.wuXing ? (
+          <View style={styles.infoRow}>
+            <Text style={[styles.infoLabel, { color: isDark ? '#888' : theme.colors.textMuted }]}>五行</Text>
+            <Text style={[styles.infoValue, { color: isDark ? '#ccc' : theme.colors.text }]}>{almanac.wuXing}</Text>
+          </View>
+        ) : null}
       </View>
 
       {/* 去抽签按钮 */}
       <TouchableOpacity
-        style={styles.drawButton}
-        onPress={() => router.push('/draw')}
+        style={[styles.drawButton, { backgroundColor: theme.colors.primary }]}
+        onPress={() => router.push('/draw' as any)}
       >
-        <Text style={styles.drawButtonText}>去抽签</Text>
+        <Text style={styles.drawButtonText}>🔮 去抽签</Text>
       </TouchableOpacity>
+      
+      <View style={styles.bottomSpace} />
     </ScrollView>
   );
 }
@@ -76,110 +158,184 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background,
-    padding: theme.spacing.md,
+    padding: 16,
   },
-  dateSection: {
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
-    marginTop: theme.spacing.lg,
+    padding: 16,
+  },
+  
+  // 日期卡片
+  dateCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  dateHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
   solarDate: {
-    fontSize: 24,
-    fontWeight: '600',
-    color: theme.colors.text,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  zodiacBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  zodiacText: {
+    fontSize: 14,
+    color: '#666',
+  },
+  lunarSection: {
+    alignItems: 'center',
+    marginTop: 16,
   },
   lunarDate: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
+    fontSize: 18,
+    fontWeight: '500',
   },
-  extraDate: {
+  ganZhiDate: {
     fontSize: 14,
-    color: theme.colors.textMuted,
-    marginTop: theme.spacing.xs,
+    marginTop: 4,
   },
-  card: {
-    backgroundColor: theme.colors.card,
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.lg,
-  },
-  tagRow: {
+  extraInfo: {
     flexDirection: 'row',
-    marginBottom: theme.spacing.md,
+    justifyContent: 'center',
+    marginTop: 16,
+    gap: 8,
   },
-  tag: {
-    backgroundColor: theme.colors.primaryLight,
-    color: theme.colors.primary,
-    paddingHorizontal: theme.spacing.sm,
-    paddingVertical: theme.spacing.xs,
-    borderRadius: theme.radius.sm,
+  infoTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
     fontSize: 14,
   },
-  yiJiSection: {
-    flexDirection: 'row',
-    marginBottom: theme.spacing.md,
+  
+  // 宜忌卡片
+  yiJiCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
   },
-  yiColumn: {
-    flex: 1,
+  yiSection: {
+    marginBottom: 16,
   },
-  jiColumn: {
-    flex: 1,
+  jiSection: {},
+  yiHeader: {
+    marginBottom: 8,
   },
-  divider: {
-    width: 1,
-    backgroundColor: theme.colors.border,
-    marginHorizontal: theme.spacing.md,
+  jiHeader: {
+    marginBottom: 8,
   },
   yiTitle: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: theme.colors.success,
-    marginBottom: theme.spacing.xs,
-  },
-  yiText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    lineHeight: 22,
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#2e7d32',
   },
   jiTitle: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#c62828',
+  },
+  yiJiList: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  yiTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  yiTagText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  jiTag: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  jiTagText: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  emptyText: {
+    fontSize: 14,
+    fontStyle: 'italic',
+  },
+  divider: {
+    height: 1,
+    marginVertical: 16,
+  },
+  
+  // 信息卡片
+  infoCard: {
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  infoCardTitle: {
     fontSize: 16,
     fontWeight: '600',
-    color: theme.colors.warning,
-    marginBottom: theme.spacing.xs,
+    marginBottom: 12,
   },
-  jiText: {
-    fontSize: 14,
-    color: theme.colors.textSecondary,
-    lineHeight: 22,
-  },
-  dailyTip: {
-    fontSize: 15,
-    color: theme.colors.text,
-    lineHeight: 24,
-    textAlign: 'center',
-    paddingTop: theme.spacing.md,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
-  },
-  drawButton: {
-    backgroundColor: theme.colors.primary,
-    borderRadius: theme.radius.lg,
-    padding: theme.spacing.lg,
+  infoRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: theme.spacing.md,
+    paddingVertical: 8,
+  },
+  infoLabel: {
+    fontSize: 14,
+  },
+  infoValue: {
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  
+  // 抽签按钮
+  drawButton: {
+    borderRadius: 16,
+    padding: 18,
+    alignItems: 'center',
+    marginTop: 8,
+    shadowColor: theme.colors.primary,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 5,
   },
   drawButtonText: {
     color: '#fff',
     fontSize: 18,
-    fontWeight: '600',
+    fontWeight: '700',
   },
-  loadingText: {
-    fontSize: 16,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
+  
+  bottomSpace: {
+    height: 32,
   },
+  
   errorText: {
     fontSize: 16,
     color: theme.colors.error,
