@@ -1,0 +1,185 @@
+From 7a5790c69d184d407055469c1480647491e72bb3 Mon Sep 17 00:00:00 2001
+From: Kale <kale@CasaX.168.5.25>
+Date: Wed, 11 Mar 2026 08:47:26 +0800
+Subject: [PATCH 2/5] =?UTF-8?q?feat:=20=E6=8E=A5=E5=85=A5=E7=99=BE?=
+ =?UTF-8?q?=E5=BA=A6=E5=8D=83=E5=B8=86=20API?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+- 添加 qianfan provider 支持
+- 创建 config.ts 读取环境变量
+- 更新 result.tsx 使用配置
+- 修复 URL 拼接问题（千帆使用 /chat/completions 而非 /v1/chat/completions）
+---
+ app/result.tsx            | 20 ++++++++------
+ src/lib/config.ts         | 37 ++++++++++++++++++++++++++
+ src/services/aiService.ts | 56 ++++++++++++++++++++++++++++++++++++++-
+ 3 files changed, 104 insertions(+), 9 deletions(-)
+ create mode 100644 src/lib/config.ts
+
+diff --git a/app/result.tsx b/app/result.tsx
+index 7304e3a..d4d15e2 100644
+--- a/app/result.tsx
++++ b/app/result.tsx
+@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
+ import { useRouter, useLocalSearchParams } from 'expo-router';
+ import { SignCard } from '../src/data/signs';
+ import { getAIInterpretation, AIInterpretation } from '../src/services/aiService';
++import { getAIConfig } from '../src/lib/config';
+ import { theme } from '../src/theme';
+ 
+ export default function ResultScreen() {
+@@ -32,14 +33,17 @@ export default function ResultScreen() {
+     
+     setAiLoading(true);
+     try {
+-      const result = await getAIInterpretation({
+-        signNumber: sign.number,
+-        signTitle: sign.title,
+-        signType: sign.type,
+-        poem: sign.poem,
+-        interpretation: sign.interpretation,
+-        question: params.question,
+-      });
++      const result = await getAIInterpretation(
++        {
++          signNumber: sign.number,
++          signTitle: sign.title,
++          signType: sign.type,
++          poem: sign.poem,
++          interpretation: sign.interpretation,
++          question: params.question,
++        },
++        getAIConfig() // 使用环境变量配置
++      );
+       setAiInterpretation(result);
+     } catch (error) {
+       console.error('Failed to load AI interpretation:', error);
+diff --git a/src/lib/config.ts b/src/lib/config.ts
+new file mode 100644
+index 0000000..f6e5e2f
+--- /dev/null
++++ b/src/lib/config.ts
+@@ -0,0 +1,37 @@
++// 应用配置
++// 从环境变量读取配置信息
++
++import { AIConfig } from '../services/aiService';
++
++export const config = {
++  // Supabase
++  supabase: {
++    url: process.env.EXPO_PUBLIC_SUPABASE_URL!,
++    anonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
++  },
++  
++  // LLM 配置
++  llm: {
++    apiKey: process.env.LLM_API_KEY,
++    baseUrl: process.env.LLM_BASE_URL,
++    provider: (process.env.LLM_PROVIDER || 'local') as AIConfig['provider'],
++  },
++  
++  // 环境标识
++  env: process.env.APP_ENV || 'dev',
++};
++
++// 获取 AI 配置
++export function getAIConfig(): AIConfig | undefined {
++  const { llm } = config;
++  
++  if (!llm.apiKey) {
++    return undefined;
++  }
++  
++  return {
++    provider: llm.provider,
++    apiKey: llm.apiKey,
++    baseUrl: llm.baseUrl,
++  };
++}
+diff --git a/src/services/aiService.ts b/src/services/aiService.ts
+index 5d9562e..3dbca29 100644
+--- a/src/services/aiService.ts
++++ b/src/services/aiService.ts
+@@ -2,7 +2,7 @@
+ // 支持多种 AI 提供商
+ 
+ export interface AIConfig {
+-  provider: 'deepseek' | 'openai' | 'anthropic' | 'local';
++  provider: 'deepseek' | 'openai' | 'anthropic' | 'qianfan' | 'local';
+   apiKey?: string;
+   baseUrl?: string;
+   model?: string;
+@@ -116,6 +116,57 @@ async function callOpenAI(
+   return data.choices[0].message.content;
+ }
+ 
++// 百度千帆 API 调用（OpenAI 兼容）
++async function callQianfan(
++  prompt: string,
++  apiKey: string,
++  baseUrl: string = 'https://qianfan.baidubce.com/v2/coding'
++): Promise<string> {
++  const response = await fetch(`${baseUrl}/chat/completions`, {
++    method: 'POST',
++    headers: {
++      'Content-Type': 'application/json',
++      'Authorization': `Bearer ${apiKey}`,
++    },
++    body: JSON.stringify({
++      model: 'deepseek-v3',
++      messages: [
++        {
++          role: 'system',
++          content: `你是一位精通中国传统文化的签文解读大师。你的解读要：
++1. 结合签文的典故和寓意
++2. 给出温暖、积极的指引
++3. 语言优美，富有诗意
++4. 实事求是，不夸大其词
++5. 给出具体可行的建议
++回复格式为 JSON：
++{
++  "summary": "签文总体寓意（50字内）",
++  "guidance": "人生指引（100字内）",
++  "advice": "具体建议（80字内）",
++  "luckyDirection": "吉利方位",
++  "luckyColor": "吉利颜色",
++  "luckyNumber": 吉利数字
++}`,
++        },
++        {
++          role: 'user',
++          content: prompt,
++        },
++      ],
++      temperature: 0.8,
++      max_tokens: 500,
++    }),
++  });
++
++  if (!response.ok) {
++    throw new Error(`AI API error: ${response.status}`);
++  }
++
++  const data = await response.json();
++  return data.choices[0].message.content;
++}
++
+ // 本地模拟解读（无 API 时使用）
+ function generateLocalInterpretation(request: AIInterpretationRequest): AIInterpretation {
+   const { signType, signTitle, question } = request;
+@@ -187,6 +238,9 @@ ${request.question ? `求签者问题：${request.question}` : ''}
+       case 'openai':
+         response = await callOpenAI(prompt, config.apiKey, config.baseUrl);
+         break;
++      case 'qianfan':
++        response = await callQianfan(prompt, config.apiKey, config.baseUrl);
++        break;
+       default:
+         return generateLocalInterpretation(request);
+     }
+-- 
+2.47.3
+

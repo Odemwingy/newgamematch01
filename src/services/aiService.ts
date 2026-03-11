@@ -33,7 +33,7 @@ async function callDeepSeek(
   apiKey: string,
   baseUrl: string = 'https://api.deepseek.com'
 ): Promise<string> {
-  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+  const response = await fetchWithTimeout(`${baseUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -44,21 +44,7 @@ async function callDeepSeek(
       messages: [
         {
           role: 'system',
-          content: `你是一位精通中国传统文化的签文解读大师。你的解读要：
-1. 结合签文的典故和寓意
-2. 给出温暖、积极的指引
-3. 语言优美，富有诗意
-4. 实事求是，不夸大其词
-5. 给出具体可行的建议
-回复格式为 JSON：
-{
-  "summary": "签文总体寓意（50字内）",
-  "guidance": "人生指引（100字内）",
-  "advice": "具体建议（80字内）",
-  "luckyDirection": "吉利方位",
-  "luckyColor": "吉利颜色",
-  "luckyNumber": 吉利数字
-}`,
+          content: SYSTEM_PROMPT,
         },
         {
           role: 'user',
@@ -71,6 +57,8 @@ async function callDeepSeek(
   });
 
   if (!response.ok) {
+    const errorBody = await response.text().catch(() => 'Unknown error');
+    console.error(`DeepSeek API error ${response.status}:`, errorBody);
     throw new Error(`AI API error: ${response.status}`);
   }
 
@@ -84,7 +72,7 @@ async function callOpenAI(
   apiKey: string,
   baseUrl: string = 'https://api.openai.com'
 ): Promise<string> {
-  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+  const response = await fetchWithTimeout(`${baseUrl}/v1/chat/completions`, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
@@ -95,8 +83,7 @@ async function callOpenAI(
       messages: [
         {
           role: 'system',
-          content: `你是一位精通中国传统文化的签文解读大师。用温暖的语调解读签文，给出积极的人生指引。
-回复格式为 JSON，包含 summary, guidance, advice, luckyDirection, luckyColor, luckyNumber 字段。`,
+          content: SYSTEM_PROMPT,
         },
         {
           role: 'user',
@@ -109,6 +96,8 @@ async function callOpenAI(
   });
 
   if (!response.ok) {
+    const errorBody = await response.text().catch(() => 'Unknown error');
+    console.error(`OpenAI API error ${response.status}:`, errorBody);
     throw new Error(`AI API error: ${response.status}`);
   }
 
@@ -116,24 +105,9 @@ async function callOpenAI(
   return data.choices[0].message.content;
 }
 
-// 百度千帆 API 调用（OpenAI 兼容）
-async function callQianfan(
-  prompt: string,
-  apiKey: string,
-  baseUrl: string = 'https://qianfan.baidubce.com/v2/coding'
-): Promise<string> {
-  const response = await fetch(`${baseUrl}/chat/completions`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: 'deepseek-v3',
-      messages: [
-        {
-          role: 'system',
-          content: `你是一位精通中国传统文化的签文解读大师。你的解读要：
+// 通用请求配置
+const API_TIMEOUT = 30000; // 30秒超时
+const SYSTEM_PROMPT = `你是一位精通中国传统文化的签文解读大师。你的解读要：
 1. 结合签文的典故和寓意
 2. 给出温暖、积极的指引
 3. 语言优美，富有诗意
@@ -147,7 +121,42 @@ async function callQianfan(
   "luckyDirection": "吉利方位",
   "luckyColor": "吉利颜色",
   "luckyNumber": 吉利数字
-}`,
+}`;
+
+// 带超时的 fetch
+async function fetchWithTimeout(url: string, options: RequestInit, timeout = API_TIMEOUT): Promise<Response> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeout);
+  
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal,
+    });
+    return response;
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// 百度千帆 API 调用（OpenAI 兼容）
+async function callQianfan(
+  prompt: string,
+  apiKey: string,
+  baseUrl: string = 'https://qianfan.baidubce.com/v2/coding'
+): Promise<string> {
+  const response = await fetchWithTimeout(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'deepseek-v3',
+      messages: [
+        {
+          role: 'system',
+          content: SYSTEM_PROMPT,
         },
         {
           role: 'user',
@@ -160,6 +169,8 @@ async function callQianfan(
   });
 
   if (!response.ok) {
+    const errorBody = await response.text().catch(() => 'Unknown error');
+    console.error(`Qianfan API error ${response.status}:`, errorBody);
     throw new Error(`AI API error: ${response.status}`);
   }
 

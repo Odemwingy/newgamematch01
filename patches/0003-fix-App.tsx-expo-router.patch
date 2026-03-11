@@ -1,0 +1,44 @@
+From ef0e544307da362d7aaf05f18cca5b62ae26ebed Mon Sep 17 00:00:00 2001
+From: Kale <kale@CasaX.168.5.25>
+Date: Wed, 11 Mar 2026 08:53:10 +0800
+Subject: [PATCH 3/5] =?UTF-8?q?fix:=20=E5=88=A0=E9=99=A4=E9=BB=98=E8=AE=A4?=
+ =?UTF-8?q?=20App.tsx=EF=BC=8C=E4=BD=BF=E7=94=A8=20expo-router=20=E5=85=A5?=
+ =?UTF-8?q?=E5=8F=A3?=
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+---
+ App.tsx | 20 --------------------
+ 1 file changed, 20 deletions(-)
+ delete mode 100644 App.tsx
+
+diff --git a/App.tsx b/App.tsx
+deleted file mode 100644
+index 0329d0c..0000000
+--- a/App.tsx
++++ /dev/null
+@@ -1,20 +0,0 @@
+-import { StatusBar } from 'expo-status-bar';
+-import { StyleSheet, Text, View } from 'react-native';
+-
+-export default function App() {
+-  return (
+-    <View style={styles.container}>
+-      <Text>Open up App.tsx to start working on your app!</Text>
+-      <StatusBar style="auto" />
+-    </View>
+-  );
+-}
+-
+-const styles = StyleSheet.create({
+-  container: {
+-    flex: 1,
+-    backgroundColor: '#fff',
+-    alignItems: 'center',
+-    justifyContent: 'center',
+-  },
+-});
+-- 
+2.47.3
+
