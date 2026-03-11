@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { SignCard } from '../src/data/signs';
 import { getAIInterpretation, AIInterpretation } from '../src/services/aiService';
+import { getAIConfig } from '../src/lib/config';
 import { theme } from '../src/theme';
 
 export default function ResultScreen() {
@@ -32,14 +33,17 @@ export default function ResultScreen() {
     
     setAiLoading(true);
     try {
-      const result = await getAIInterpretation({
-        signNumber: sign.number,
-        signTitle: sign.title,
-        signType: sign.type,
-        poem: sign.poem,
-        interpretation: sign.interpretation,
-        question: params.question,
-      });
+      const result = await getAIInterpretation(
+        {
+          signNumber: sign.number,
+          signTitle: sign.title,
+          signType: sign.type,
+          poem: sign.poem,
+          interpretation: sign.interpretation,
+          question: params.question,
+        },
+        getAIConfig() // 使用环境变量配置
+      );
       setAiInterpretation(result);
     } catch (error) {
       console.error('Failed to load AI interpretation:', error);

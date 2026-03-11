@@ -2,7 +2,7 @@
 // 支持多种 AI 提供商
 
 export interface AIConfig {
-  provider: 'deepseek' | 'openai' | 'anthropic' | 'local';
+  provider: 'deepseek' | 'openai' | 'anthropic' | 'qianfan' | 'local';
   apiKey?: string;
   baseUrl?: string;
   model?: string;
@@ -116,6 +116,57 @@ async function callOpenAI(
   return data.choices[0].message.content;
 }
 
+// 百度千帆 API 调用（OpenAI 兼容）
+async function callQianfan(
+  prompt: string,
+  apiKey: string,
+  baseUrl: string = 'https://qianfan.baidubce.com/v2/coding'
+): Promise<string> {
+  const response = await fetch(`${baseUrl}/chat/completions`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: 'deepseek-v3',
+      messages: [
+        {
+          role: 'system',
+          content: `你是一位精通中国传统文化的签文解读大师。你的解读要：
+1. 结合签文的典故和寓意
+2. 给出温暖、积极的指引
+3. 语言优美，富有诗意
+4. 实事求是，不夸大其词
+5. 给出具体可行的建议
+回复格式为 JSON：
+{
+  "summary": "签文总体寓意（50字内）",
+  "guidance": "人生指引（100字内）",
+  "advice": "具体建议（80字内）",
+  "luckyDirection": "吉利方位",
+  "luckyColor": "吉利颜色",
+  "luckyNumber": 吉利数字
+}`,
+        },
+        {
+          role: 'user',
+          content: prompt,
+        },
+      ],
+      temperature: 0.8,
+      max_tokens: 500,
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`AI API error: ${response.status}`);
+  }
+
+  const data = await response.json();
+  return data.choices[0].message.content;
+}
+
 // 本地模拟解读（无 API 时使用）
 function generateLocalInterpretation(request: AIInterpretationRequest): AIInterpretation {
   const { signType, signTitle, question } = request;
@@ -186,6 +237,9 @@ ${request.question ? `求签者问题：${request.question}` : ''}
         break;
       case 'openai':
         response = await callOpenAI(prompt, config.apiKey, config.baseUrl);
+        break;
+      case 'qianfan':
+        response = await callQianfan(prompt, config.apiKey, config.baseUrl);
         break;
       default:
         return generateLocalInterpretation(request);
